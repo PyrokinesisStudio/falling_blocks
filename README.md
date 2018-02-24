@@ -1,2 +1,2 @@
 # falling_blocks
-Writing tetris from scratch as practice.
+this is a personal project. I intend to tetris from scratch as practice.
