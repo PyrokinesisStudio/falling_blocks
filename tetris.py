@@ -5,6 +5,8 @@ import time
 import random
 import msvcrt#currently only works for windows os
 import platform
+import threading
+from queue import Queue
 clear = lambda: os.system("cls") if platform.system() == "Windows" else lambda: os.system("clear")
 _domain = 10#12
 _range = 18#23
@@ -58,7 +60,7 @@ def grid_add(grid, points, values):
         index += 1
     return grid
 #
-def grid_render(grid, default = " ", buffer = 2):
+def grid_render(grid, default = " ", buffer = 1):
     #returns a text representation of the grid based on the data inside it
     render = ""
     width = 0
@@ -71,15 +73,16 @@ def grid_render(grid, default = " ", buffer = 2):
     text = ""
     for y in range(height - 1, -1, -1):
         for x in range(width):
-            text += default + "  " if grid[x,y] == "" else grid[x,y] + " " * buffer
+            text += default + " " * buffer if grid[x,y] == "" else grid[x,y] + " " * buffer
         text += "\n"
     text = text[:len(text) - 1]
     #removes the last "\n" character from the render
     return text
 #
-def render_replace(render, points, values, offset = 3):
+def render_replace(render, points, values, buffer = 1):
     #returns a altered text representation by replacing values
     render = render.split("\n")
+    offset = buffer + 1
     x = 0
     y = 1
     if len(points) != len(values):
@@ -171,12 +174,13 @@ def main():
     x, y = 0, 1
     width = _domain
     height = _range
+    empty = " "
     #domain and range are global for now
     matrix = create_grid(width, height, "")
     matrix = add_edges(matrix, "#")
-    output = grid_render(matrix, "-")
+    output = grid_render(matrix, empty)
     drop_point = (mid, height)
-    blocks = (simple, simple, simple, i, I, I, J, L, O, Z, T, T, S)
+    blocks = (simple, i, I, I, J, L, O, Z, T, T, S)
     #1st coordinate in blocks must be equal to drop_point
     focus = list(random.choice(blocks))
     next = list(random.choice(blocks))
@@ -202,7 +206,7 @@ def main():
                 if coordinate[y] in range(height):
                     new_points.append(coordinate)
             if old_points != [] or new_points != []:
-                output = render_replace(output, old_points, "-")
+                output = render_replace(output, old_points, empty)
                 output = render_replace(output, new_points, "x")
         else:        
             if grid_collision(matrix, [drop_point], "down", 1) == False:
@@ -210,6 +214,7 @@ def main():
                 focus = next
                 next = list(random.choice(blocks))
             else:
+                time.sleep(2)
                 clear()
                 print "game over"
                 try:
@@ -230,12 +235,13 @@ def main():
                             file.close()
                 simulation = "off"
                 #print max(frameclock)
-                choice = raw_input("play again?")
+                choice = raw_input("play again?: ")
                 if choice == '':
                     pass
                 elif choice[0].lower() == "y":
                     main()
             filled = 0
+            high_row = 0
             #removing filled rows
             #adjusts for borders
             for y_val in range(1, height - 1):
@@ -246,15 +252,16 @@ def main():
                     if len(fill) == width - 2:
                         for coordinate in fill:
                             matrix[coordinate] = ""
-                        output = render_replace(output, fill, "-")
+                        output = render_replace(output, fill, empty)
                         filled += 1
+                        high_row = y_val
             score += 5 ** filled if filled > 0 else 0
             #shifting rows down
             #adjusts for borders
             if filled > 0:
                 clear()
                 print output + "\nScore: " + str(score) + "\nnext: # of blocks = " + str(len(next))
-                for y_val in range(1 + filled, height):
+                for y_val in range(1 + high_row, height):
                     falling_blocks = []
                     for x_val in range(1, width - 1):
                         if matrix[x_val,y_val] != "":
@@ -268,10 +275,11 @@ def main():
                                 felled_blocks.append((coordinate[x], coordinate[y] - 1))
                         matrix = grid_add(matrix, falling_blocks, "")
                         matrix = grid_add(matrix, felled_blocks, "x")
-                        output = grid_render(matrix, "-")
+                        output = render_replace(output, falling_blocks, " ")
+                        output = render_replace(output, felled_blocks, "x")
                         clear()
                         print output + "\nScore: " + str(score) + "\nnext: # of blocks = " + str(len(next))
-                        time.sleep(0.1)
+                        time.sleep(0.15)
             continue
         if output != imprint:
             #raw_input()
@@ -302,7 +310,7 @@ def main():
                             if coordinate[y] in range(height):
                                 new_points.append(coordinate)
                         if old_points != [] or new_points != []:
-                            output = render_replace(output, old_points, "-")
+                            output = render_replace(output, old_points, empty)
                             output = render_replace(output, new_points, "x")
                 elif move == "d":
                     if grid_collision(matrix, focus, "right", 1) == False:
@@ -319,7 +327,7 @@ def main():
                             if coordinate[y] in range(height):
                                 new_points.append(coordinate)
                         if old_points != [] or new_points != []:
-                            output = render_replace(output, old_points, "-")
+                            output = render_replace(output, old_points, empty)
                             output = render_replace(output, new_points, "x")
                 elif move == "s":
                     if grid_collision(matrix, focus, "down", 1) == False:
@@ -336,7 +344,7 @@ def main():
                             if coordinate[y] in range(height):
                                 new_points.append(coordinate)
                         if old_points != [] or new_points != []:
-                            output = render_replace(output, old_points, "-")
+                            output = render_replace(output, old_points, empty)
                             output = render_replace(output, new_points, "x")
                 elif move == "q":
                     if grid_collision(matrix, focus, "-90rotation") == False:
@@ -357,7 +365,7 @@ def main():
                             if coordinate[y] in range(height):
                                 new_points.append(coordinate)
                         if old_points != [] or new_points != []:
-                            output = render_replace(output, old_points, "-")
+                            output = render_replace(output, old_points, empty)
                             output = render_replace(output, new_points, "x")
                 elif move == "e":
                     if grid_collision(matrix, focus, "90rotation") == False:
@@ -378,15 +386,15 @@ def main():
                             if coordinate[y] in range(height):
                                 new_points.append(coordinate)
                         if old_points != [] or new_points != []:
-                            output = render_replace(output, old_points, "-")
+                            output = render_replace(output, old_points, empty)
                             output = render_replace(output, new_points, "x")
-                time.sleep(.03)
+                #time.sleep(.03)
             if output != imprint:
                 clear()
                 print output + "\nScore: " + str(score) + "\nnext: # of blocks = " + str(len(next))
                 imprint = output
             if drop_rate > .30:
-                drop_rate -= 0.0000005
+                drop_rate -= 0.0000009
             #print drop_rate
         
 #
