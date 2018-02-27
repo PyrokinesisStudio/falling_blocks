@@ -169,6 +169,11 @@ def grid_collision(grid, points, direction, distance = 1):
     #This function can be replaced with a function that just checks a list of points for values, This would prevent the same calculation from being repeated
 #
 def main():
+    highscore = ""
+    with open("highscore.txt", "a+") as file:
+        scan = file.read()
+        if scan != "":
+            highscore = "\n" + scan
     #runs the code
     score = 0
     x, y = 0, 1
@@ -214,17 +219,16 @@ def main():
                 focus = next
                 next = list(random.choice(blocks))
             else:
-                time.sleep(2)
+                time.sleep(1.5)
                 clear()
-                print "game over"
-                try:
-                    file = open("highscore.txt", "a+")
-                    highscore = file.read()
-                    print highscore
-                    print "your score: " + str(score)
-                finally:
-                    file.close()
-                if int(filter(str.isdigit, highscore)) < score:
+                print "game over\n" + highscore + "your score: " + str(score)
+                if highscore == "":
+                    print "you created a highscore!"
+                    if raw_input("enter 'yes' if you you like to save your score: ") in ["yes", "y"]:
+                        name = raw_input("name?: ")
+                        with open("highscore.txt", "w+") as file:
+                            file.write(name + ": " + str(score))
+                elif int(filter(str.isdigit, highscore)) < score:
                     print "congratulations: you beat the highscore!"
                     if raw_input("enter 'yes' if you you like to save your score: ") in ["yes", "y"]:
                         name = raw_input("name?: ")
@@ -260,7 +264,7 @@ def main():
             #adjusts for borders
             if filled > 0:
                 clear()
-                print output + "\nScore: " + str(score) + "\nnext: # of blocks = " + str(len(next))
+                print output + highscore + "\ncurrent score: " + str(score) + "\nnext: # of blocks = " + str(len(next))
                 for y_val in range(1 + high_row, height):
                     falling_blocks = []
                     for x_val in range(1, width - 1):
@@ -278,13 +282,13 @@ def main():
                         output = render_replace(output, falling_blocks, " ")
                         output = render_replace(output, felled_blocks, "x")
                         clear()
-                        print output + "\nScore: " + str(score) + "\nnext: # of blocks = " + str(len(next))
+                        print output + highscore + "\ncurrent score: " + str(score) + "\nnext: # of blocks = " + str(len(next))
                         time.sleep(0.15)
             continue
         if output != imprint:
             #raw_input()
             clear()
-            print output + "\nScore: " + str(score) + "\nnext: # of blocks = " + str(len(next))
+            print output + highscore + "\ncurrent score: " + str(score) + "\nnext: # of blocks = " + str(len(next))
             imprint = output
         frameclock.add(time.time() - start)
         #print .3 - (time.time() - start), raw_input()
@@ -391,7 +395,7 @@ def main():
                 #time.sleep(.03)
             if output != imprint:
                 clear()
-                print output + "\nScore: " + str(score) + "\nnext: # of blocks = " + str(len(next))
+                print output + highscore + "\ncurrent score: " + str(score) + "\nnext: # of blocks = " + str(len(next))
                 imprint = output
             if drop_rate > .30:
                 drop_rate -= 0.0000009
