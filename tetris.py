@@ -221,7 +221,7 @@ def main():
             else:
                 time.sleep(1.5)
                 clear()
-                print "game over\n" + highscore + "your score: " + str(score)
+                print "game over\n" + highscore + "\nyour score: " + str(score)
                 if highscore == "":
                     print "you created a highscore!"
                     if raw_input("enter 'yes' if you you like to save your score: ") in ["yes", "y"]:
